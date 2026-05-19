@@ -6,6 +6,7 @@ import AuthFormField from '../../components/auth/AuthFormField';
 import DemoAccounts from '../../components/auth/DemoAccounts';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { validateLoginForm } from '../../utils/authValidation';
+import { getApiErrorMessage } from '../../utils/apiErrors';
 
 const REMEMBER_KEY = 'goal_portal_remember_email';
 
@@ -28,17 +29,19 @@ export default function Login() {
     }
   }, [user, navigate]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const { errors: validationErrors, isValid } = validateLoginForm({ email, password });
+  const performLogin = async (emailValue, passwordValue) => {
+    const { errors: validationErrors, isValid } = validateLoginForm({
+      email: emailValue,
+      password: passwordValue,
+    });
     setErrors(validationErrors);
     if (!isValid) return;
 
     setLoading(true);
     try {
-      const loggedInUser = await login(email.trim(), password);
+      const loggedInUser = await login(emailValue.trim(), passwordValue);
       if (remember) {
-        localStorage.setItem(REMEMBER_KEY, email.trim());
+        localStorage.setItem(REMEMBER_KEY, emailValue.trim());
       } else {
         localStorage.removeItem(REMEMBER_KEY);
       }
@@ -46,18 +49,26 @@ export default function Login() {
       const redirectTo = location.state?.from?.pathname || '/dashboard';
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.message || 'Invalid email or password. Please try again.';
-      toast.error(msg);
+      const msg = getApiErrorMessage(
+        err,
+        'Invalid email or password. Please try again.'
+      );
       setErrors({ form: msg });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await performLogin(email, password);
+  };
+
   const handleDemoSelect = (account) => {
     setEmail(account.email);
     setPassword(account.password);
     setErrors({});
+    void performLogin(account.email, account.password);
   };
 
   if (user) return null;

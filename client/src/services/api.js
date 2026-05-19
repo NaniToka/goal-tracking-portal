@@ -33,6 +33,15 @@ api.interceptors.request.use((config) => {
 let isRefreshing = false;
 let refreshQueue = [];
 
+const isPublicAuthRequest = (config) => {
+  const url = config?.url || '';
+  return (
+    url.includes('/auth/login') ||
+    url.includes('/auth/register') ||
+    url.includes('/auth/forgot-password')
+  );
+};
+
 const processQueue = (error, token = null) => {
   refreshQueue.forEach((prom) => {
     if (error) prom.reject(error);
@@ -46,6 +55,10 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    if (isPublicAuthRequest(originalRequest)) {
+      return Promise.reject(error);
+    }
 
     if (error.response?.status !== 401 || originalRequest._retry) {
       if (error.response?.status === 401) {
