@@ -2,8 +2,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
-  "installCommand": "npm install",
+  "installCommand": "npm install && npm install --prefix ../server",
   "framework": "vite",
+  "functions": {
+    "api/[...path].cjs": {
+      "maxDuration": 30,
+      "includeFiles": "../server/**"
+    }
+  },
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
     {

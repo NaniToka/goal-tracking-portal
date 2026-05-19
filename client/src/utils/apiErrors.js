@@ -6,6 +6,11 @@ export function getApiErrorMessage(err, fallback = 'Something went wrong. Please
     return err.response.data.message;
   }
 
+  const contentType = err?.response?.headers?.['content-type'] || '';
+  if (contentType.includes('text/html')) {
+    return 'API server is not connected. Add MONGODB_URI and JWT secrets in Vercel, then redeploy.';
+  }
+
   if (err?.code === 'ERR_NETWORK' || !err?.response) {
     const apiUrl = import.meta.env.VITE_API_URL || '/api';
     if (!import.meta.env.VITE_API_URL) {
